@@ -1,0 +1,53 @@
+#!/bin/bash
+
+LOGFILE="/tmp/spotify_mute.log"
+
+log() {
+    echo "$(date): $1" >> "$LOGFILE"
+}
+
+get_spotify_status() {
+    playerctl --player=spotify metadata --format "{{title}} - {{artist}}" 2>/dev/null
+}
+
+toggle_mute() {
+    if [[ "$1" == "mute" ]]; then
+        playerctl --player=spotify volume 0
+        log "Spotify muted"
+    elif [[ "$1" == "unmute" ]]; then
+        playerctl --player=spotify volume 1
+        log "Spotify unmuted"
+    fi
+}
+
+PREVIOUS_STATE=""
+MUTED=0
+
+log "Script started."
+
+while true; do
+    STATUS=$(get_spotify_status)
+    log "Current status: $STATUS"
+
+    if [[ "$STATUS" == *"Advertisement"* ]]; then
+        if [[ $MUTED -eq 0 ]]; then
+            log "Ad detected. Muting Spotify."
+            toggle_mute "mute"
+            MUTED=1
+        fi
+    else
+        if [[ $MUTED -eq 1 && "$PREVIOUS_STATE" == "Advertisement" ]]; then
+            log "Music detected. Unmuting Spotify."
+            toggle_mute "unmute"
+            MUTED=0
+        fi
+    fi
+
+    if [[ "$STATUS" == *"Advertisement"* ]]; then
+        PREVIOUS_STATE="Advertisement"
+    else
+        PREVIOUS_STATE="Music"
+    fi
+
+    sleep 1
+done

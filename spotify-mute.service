@@ -1,0 +1,13 @@
+[Unit]
+Description=Spotify Ad Muter
+After=network.target
+
+[Service]
+ExecStart=/home/<YOUR USERNAME HERE>/.local/bin/spotify-mute
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target
